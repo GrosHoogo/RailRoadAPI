@@ -1,0 +1,61 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+      "title": "RailRoad API",
+      "description": "API documentation for RailRoad project",
+      "version": "1.0.0"
+    },
+    "servers": [
+      {
+        "url": "http://localhost:3000",
+        "description": "Local server"
+      }
+    ],
+    "paths": {
+      "/auth/register": {
+        "post": {
+          "summary": "Register a new user",
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "User registered"
+            },
+            "400": {
+              "description": "Bad request"
+            }
+          }
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "User": {
+          "type": "object",
+          "properties": {
+            "email": {
+              "type": "string"
+            },
+            "pseudo": {
+              "type": "string"
+            },
+            "password": {
+              "type": "string"
+            },
+            "role": {
+              "type": "string",
+              "enum": ["user", "employee", "admin"]
+            }
+          }
+        }
+      }
+    }
+  }
+  
