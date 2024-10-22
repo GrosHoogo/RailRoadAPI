@@ -19,7 +19,7 @@ router.get('/', getTrainStations);
 router.post('/', authMiddleware, adminMiddleware, upload.single('image'), createTrainStation);
 
 // Update a train station (admin only)
-router.put('/:id', authMiddleware, adminMiddleware, updateTrainStation);
+router.put('/:id', authMiddleware, adminMiddleware, upload.single('image'), updateTrainStation);
 
 // Delete a train station (admin only)
 router.delete('/:id', authMiddleware, adminMiddleware, deleteTrainStation);
