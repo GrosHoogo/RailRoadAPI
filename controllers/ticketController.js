@@ -1,15 +1,19 @@
+// controllers/ticketController.js
 const Ticket = require('../models/Ticket');
+const { ticketBookingSchema, ticketValidationSchema } = require('../validation/ticketValidation');
 
-// Réserver un billet
+// Book a ticket
 exports.bookTicket = async (req, res) => {
-  const { userId, trainId, startStation, endStation } = req.body;
+  // Validate the request body
+  const { error } = ticketBookingSchema.validate(req.body);
+  if (error) return res.status(400).json({ message: error.details[0].message });
+
+  const { trainId } = req.body; // Assuming you only want trainId now
   try {
     const ticket = new Ticket({
-      user: userId,
+      user: req.user.id,
       train: trainId,
-      start_station: startStation,
-      end_station: endStation,
-      isValid: false // Défini par défaut à false
+      isValid: false, // Default to false
     });
     await ticket.save();
     res.status(201).json(ticket);
@@ -18,16 +22,16 @@ exports.bookTicket = async (req, res) => {
   }
 };
 
-
-// Valider un ticket (uniquement pour les employés)
 exports.validateTicket = async (req, res) => {
-  const { userId, trainId } = req.params;
+  const { ticketId } = req.params;  // This must match the route definition
+
   try {
-    const ticket = await Ticket.findOne({ user: userId, train: trainId });
+    const ticket = await Ticket.findById(ticketId).populate('user').populate('train');
     if (!ticket) return res.status(404).json({ message: 'Ticket not found' });
 
-    ticket.isValid = true; // Met à jour le champ isValid
-    ticket.validationDate = new Date(); // Ajoute la date de validation
+    // Update ticket validation status and date
+    ticket.isValid = true;
+    ticket.validationDate = new Date(); 
     await ticket.save();
 
     res.json({ message: 'Ticket validated', ticket });
@@ -35,3 +39,4 @@ exports.validateTicket = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
