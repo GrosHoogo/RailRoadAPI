@@ -1,8 +1,9 @@
 const Train = require('../models/Train');
 
-// Get all trains
+// Get all trains with optional sorting and limit
 exports.getTrains = async (req, res) => {
   const { limit = 10, sortBy = 'time_of_departure' } = req.query;
+
   try {
     const trains = await Train.find().sort(sortBy).limit(parseInt(limit));
     res.json(trains);
@@ -14,6 +15,7 @@ exports.getTrains = async (req, res) => {
 // Create a new train (admin only)
 exports.createTrain = async (req, res) => {
   const { name, start_station, end_station, time_of_departure } = req.body;
+
   try {
     const train = new Train({ name, start_station, end_station, time_of_departure });
     await train.save();
@@ -26,6 +28,7 @@ exports.createTrain = async (req, res) => {
 // Update a train (admin only)
 exports.updateTrain = async (req, res) => {
   const { id } = req.params;
+
   try {
     const train = await Train.findByIdAndUpdate(id, req.body, { new: true });
     if (!train) return res.status(404).json({ message: 'Train not found' });
@@ -38,6 +41,7 @@ exports.updateTrain = async (req, res) => {
 // Delete a train (admin only)
 exports.deleteTrain = async (req, res) => {
   const { id } = req.params;
+
   try {
     const train = await Train.findByIdAndDelete(id);
     if (!train) return res.status(404).json({ message: 'Train not found' });
