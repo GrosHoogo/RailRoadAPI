@@ -5,7 +5,7 @@
     "title": "RailRoad API",
     "description": "API for managing users and train tickets"
   },
-  "host": "localhost:5000",
+  "host": "localhost:3000",
   "basePath": "/api",
   "tags": [
     {
