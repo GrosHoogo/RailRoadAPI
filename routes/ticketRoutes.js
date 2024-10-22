@@ -1,14 +1,17 @@
 const express = require('express');
-const { bookTicket, validateTicket } = require('../controllers/ticketController');
+const {
+  bookTicket,
+  validateTicket
+} = require('../controllers/ticketController');
 const authMiddleware = require('../middlewares/auth');
-const employeeMiddleware = require('../middlewares/employee.js');
+const employeeMiddleware = require('../middlewares/employee'); // Assurez-vous d'avoir ce middleware
 
 const router = express.Router();
 
-// Book a ticket
-router.post('/', authMiddleware, bookTicket);
+// Réserver un billet
+router.post('/book', authMiddleware, bookTicket);
 
-// Validate a ticket (employee only)
-router.put('/:id/validate', authMiddleware, employeeMiddleware, validateTicket);
+// Valider un billet (uniquement pour les employés et administrateurs)
+router.put('/:userId/:trainId/validate', authMiddleware, employeeMiddleware, validateTicket);
 
 module.exports = router;
