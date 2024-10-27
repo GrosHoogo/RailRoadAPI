@@ -1,15 +1,16 @@
 const request = require('supertest');
-const app = require('../app'); // Assure-toi que le chemin d'accès à ton fichier app est correct
-const connectDB = require('../config'); // Corrige le chemin si nécessaire
+const app = require('../app'); // Ensure the path to your app file is correct
+const connectDB = require('../config'); // Correct the path if necessary
 const Train = require('../models/Train');
+const mongoose = require('mongoose'); // Import mongoose
 
-let adminToken; // Token de l'utilisateur admin
+let adminToken; // Admin user token
 
-// Avant tous les tests, on se connecte à la base de données et on crée un utilisateur admin
+// Before all tests, connect to the database and create an admin user
 beforeAll(async () => {
-    await connectDB(); // Connexion à la base de données
+    await connectDB(); // Connect to the database
 
-    // Créer un utilisateur admin
+    // Create an admin user
     const registerResponse = await request(app)
         .post('/api/auth/register')
         .send({
@@ -19,9 +20,9 @@ beforeAll(async () => {
             role: "admin"
         });
 
-    console.log('Registration response:', registerResponse.body); // Log de la réponse d'enregistrement
+    console.log('Registration response:', registerResponse.body); // Log registration response
 
-    // Authentifier l'utilisateur admin pour obtenir le token
+    // Authenticate the admin user to obtain the token
     const loginResponse = await request(app)
         .post('/api/users/login')
         .send({
@@ -29,26 +30,31 @@ beforeAll(async () => {
             password: 'admin123' 
         });
 
-    console.log('Login response:', loginResponse.body); // Log de la réponse de connexion
+    console.log('Login response:', loginResponse.body); // Log login response
 
-    adminToken = loginResponse.body.token; // Stocker le token
-    console.log('Admin token:', adminToken); // Log du token
+    adminToken = loginResponse.body.token; // Store the token
+    console.log('Admin token:', adminToken); // Log the token
 });
 
-// Après chaque test, on nettoie la collection de trains
+// After each test, clean up the Train collection
 afterEach(async () => {
     await Train.deleteMany();
 });
 
-// Décrire les tests pour le contrôleur de train
+// After all tests, disconnect from the database
+afterAll(async () => {
+    await mongoose.disconnect(); // Disconnect from MongoDB
+});
+
+// Describe tests for the Train controller
 describe('Train Controller', () => {
-    // Test pour créer un nouveau train
+    // Test to create a new train
     it('should create a new train', async () => {
         const newTrain = {
             name: 'Express Train',
             start_station: 'Station A',
             end_station: 'Station B',
-            time_of_departure: new Date(), // Assure-toi que c'est une date valide
+            time_of_departure: new Date(), // Ensure this is a valid date
         };
 
         const response = await request(app)
@@ -61,7 +67,7 @@ describe('Train Controller', () => {
         expect(response.body.name).toBe(newTrain.name);
     });
 
-    // Test pour obtenir tous les trains
+    // Test to get all trains
     it('should get all trains', async () => {
         const response = await request(app)
             .get('/api/trains')
@@ -71,7 +77,7 @@ describe('Train Controller', () => {
         expect(Array.isArray(response.body)).toBe(true);
     });
 
-    // Test pour mettre à jour un train
+    // Test to update an existing train
     it('should update an existing train', async () => {
         const train = new Train({
             name: 'Old Train',
@@ -79,7 +85,7 @@ describe('Train Controller', () => {
             end_station: 'Station Y',
             time_of_departure: new Date(),
         });
-        await train.save(); // Enregistrer le train dans la base de données
+        await train.save(); // Save the train to the database
 
         const updatedTrain = {
             name: 'Updated Train',
@@ -97,7 +103,7 @@ describe('Train Controller', () => {
         expect(response.body.name).toBe(updatedTrain.name);
     });
 
-    // Test pour supprimer un train
+    // Test to delete a train
     it('should delete a train', async () => {
         const train = new Train({
             name: 'Train to be deleted',
@@ -105,7 +111,7 @@ describe('Train Controller', () => {
             end_station: 'Station N',
             time_of_departure: new Date(),
         });
-        await train.save(); // Enregistrer le train dans la base de données
+        await train.save(); // Save the train to the database
 
         const response = await request(app)
             .delete(`/api/trains/${train._id}`)
@@ -115,10 +121,10 @@ describe('Train Controller', () => {
         expect(response.body.message).toBe('Train deleted');
     });
 
-    // Test pour tenter de supprimer un train inexistant
+    // Test to attempt deleting a non-existent train
     it('should return 404 when deleting a non-existent train', async () => {
         const response = await request(app)
-            .delete('/api/trains/609c3f3d4f1f4d7b3b9c7e6a') // Utilise un ID fictif
+            .delete('/api/trains/609c3f3d4f1f4d7b3b9c7e6a') // Use a fake ID
             .set('Authorization', `Bearer ${adminToken}`);
 
         expect(response.status).toBe(404);

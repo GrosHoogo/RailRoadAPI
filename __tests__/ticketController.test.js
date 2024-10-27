@@ -1,20 +1,20 @@
 const request = require('supertest');
-const app = require('../app'); // Assurez-vous que le chemin d'accès à votre fichier app est correct
-const connectDB = require('../config'); // Corrigez le chemin si nécessaire
+const app = require('../app'); // Ensure the path to your app file is correct
+const connectDB = require('../config'); // Correct the path if necessary
 const Ticket = require('../models/Ticket');
 const User = require('../models/User');
 const Train = require('../models/Train');
-const mongoose = require('mongoose'); // Ajoutez cette ligne pour importer Mongoose
+const mongoose = require('mongoose'); // Import mongoose
 
-let adminToken; // Token de l'utilisateur admin
-let userToken; // Token de l'utilisateur normal
-let testTrainId; // ID du train utilisé pour les tests
+let adminToken; // Admin user token
+let userToken; // Normal user token
+let testTrainId; // ID of the train used for tests
 
-// Avant tous les tests, on se connecte à la base de données et on crée un utilisateur admin et un utilisateur normal
+// Before all tests, connect to the database and create an admin user and a normal user
 beforeAll(async () => {
-    await connectDB(); // Connexion à la base de données
+    await connectDB(); // Connect to the database
 
-    // Créer un utilisateur admin
+    // Create an admin user
     const registerAdminResponse = await request(app)
         .post('/api/auth/register')
         .send({
@@ -26,7 +26,7 @@ beforeAll(async () => {
 
     console.log('Admin registration response:', registerAdminResponse.body);
 
-    // Authentifier l'utilisateur admin pour obtenir le token
+    // Authenticate the admin user to obtain the token
     const loginAdminResponse = await request(app)
         .post('/api/users/login')
         .send({
@@ -37,7 +37,7 @@ beforeAll(async () => {
     console.log('Admin login response:', loginAdminResponse.body);
     adminToken = loginAdminResponse.body.token;
 
-    // Créer un utilisateur normal
+    // Create a normal user
     const registerUserResponse = await request(app)
         .post('/api/auth/register')
         .send({
@@ -49,7 +49,7 @@ beforeAll(async () => {
 
     console.log('User registration response:', registerUserResponse.body);
 
-    // Authentifier l'utilisateur normal pour obtenir le token
+    // Authenticate the normal user to obtain the token
     const loginUserResponse = await request(app)
         .post('/api/users/login')
         .send({
@@ -60,25 +60,30 @@ beforeAll(async () => {
     console.log('User login response:', loginUserResponse.body);
     userToken = loginUserResponse.body.token;
 
-    // Créer un train pour les tests
+    // Create a train for tests
     const train = new Train({
         name: 'Test Train',
         start_station: 'Station A',
         end_station: 'Station B',
-        time_of_departure: new Date() // Assurez-vous que c'est une date valide
+        time_of_departure: new Date() // Ensure this is a valid date
     });
     await train.save();
-    testTrainId = train._id; // Conservez l'ID du train pour les tests
+    testTrainId = train._id; // Store the train ID for tests
 });
 
-// Après chaque test, on nettoie la collection de tickets
+// After each test, clean up the Ticket collection
 afterEach(async () => {
     await Ticket.deleteMany();
 });
 
-// Décrire les tests pour le contrôleur de tickets
+// After all tests, disconnect from the database
+afterAll(async () => {
+    await mongoose.disconnect(); // Disconnect from MongoDB
+});
+
+// Describe tests for the Ticket controller
 describe('Ticket Controller', () => {
-    // Test pour réserver un ticket
+    // Test to book a ticket
     it('should book a ticket for a user', async () => {
         const response = await request(app)
             .post('/api/tickets/book')
@@ -91,25 +96,25 @@ describe('Ticket Controller', () => {
         expect(response.body).toHaveProperty('user');
     });
 
-    // Test pour réserver un ticket avec des données invalides
+    // Test to book a ticket with invalid data
     it('should return 400 when booking a ticket with invalid data', async () => {
         const response = await request(app)
             .post('/api/tickets/book')
             .set('Authorization', `Bearer ${userToken}`)
-            .send({}); // Données vides
+            .send({}); // Empty data
 
         expect(response.status).toBe(400);
         expect(response.body).toHaveProperty('message');
     });
 
-    // Test pour valider un ticket
+    // Test to validate a ticket
     it('should validate a ticket', async () => {
         const ticket = new Ticket({
-            user: new mongoose.Types.ObjectId(), // Utilisez 'new' pour instancier ObjectId
+            user: new mongoose.Types.ObjectId(), // Use 'new' to instantiate ObjectId
             train: testTrainId,
             isValid: false
         });
-        await ticket.save(); // Enregistrer le ticket dans la base de données
+        await ticket.save(); // Save the ticket to the database
 
         const response = await request(app)
             .put(`/api/tickets/${ticket._id}/validate`)
@@ -120,29 +125,29 @@ describe('Ticket Controller', () => {
         expect(response.body.ticket).toHaveProperty('isValid', true);
     });
 
-    // Test pour tenter de valider un ticket inexistant
+    // Test to attempt validating a non-existent ticket
     it('should return 404 when validating a non-existent ticket', async () => {
         const response = await request(app)
-            .put('/api/tickets/609c3f3d4f1f4d7b3b9c7e6a/validate') // ID fictif
+            .put('/api/tickets/609c3f3d4f1f4d7b3b9c7e6a/validate') // Fake ID
             .set('Authorization', `Bearer ${adminToken}`);
 
         expect(response.status).toBe(404);
         expect(response.body).toHaveProperty('message', 'Ticket not found');
     });
 
-    // Test pour valider un ticket sans autorisation (utilisateur normal)
+    // Test to validate a ticket without authorization (normal user)
     it('should return 403 when a non-employee tries to validate a ticket', async () => {
         const ticket = new Ticket({
-            user: new mongoose.Types.ObjectId(), // Utilisez 'new' pour instancier ObjectId
+            user: new mongoose.Types.ObjectId(), // Use 'new' to instantiate ObjectId
             train: testTrainId,
             isValid: false
         });
-        await ticket.save(); // Enregistrer le ticket dans la base de données
+        await ticket.save(); // Save the ticket to the database
 
         const response = await request(app)
             .put(`/api/tickets/${ticket._id}/validate`)
             .set('Authorization', `Bearer ${userToken}`);
 
-        expect(response.status).toBe(403); // Accès interdit
+        expect(response.status).toBe(403); // Forbidden access
     });
 });

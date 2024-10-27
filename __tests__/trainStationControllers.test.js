@@ -1,17 +1,18 @@
 const request = require('supertest');
-const app = require('../app'); // Assurez-vous que votre application Express est exportée
+const app = require('../app'); // Ensure your Express app is exported
 const TrainStation = require('../models/TrainStation');
 const User = require('../models/User');
+const mongoose = require('mongoose'); // Import mongoose
 
 describe('Train Station API Tests', () => {
     let adminToken;
-    let testStationId; // Pour stocker l'ID de la gare créée pour les tests
+    let testStationId; // To store the ID of the created train station for tests
 
     beforeAll(async () => {
-        // Supprimer tous les utilisateurs existants avant de créer un nouvel admin
+        // Remove all existing users before creating a new admin
         await User.deleteMany({});
 
-        // Créer un utilisateur administrateur pour le test
+        // Create an admin user for the test
         const adminUser = new User({
             email: 'admin@example.com',
             pseudo: 'admin',
@@ -21,23 +22,24 @@ describe('Train Station API Tests', () => {
         await adminUser.save();
         adminToken = adminUser.generateAuthToken();
 
-        // Supprimer toutes les gares existantes avant de créer une nouvelle gare
+        // Remove all existing train stations before creating a new one
         await TrainStation.deleteMany({});
 
-        // Créer une gare pour les tests
+        // Create a train station for tests
         const testStation = new TrainStation({
             name: 'Test Station',
             open_hour: '06:00',
             close_hour: '22:00'
         });
         await testStation.save();
-        testStationId = testStation._id; // Enregistrez l'ID pour les tests suivants
+        testStationId = testStation._id; // Save the ID for subsequent tests
     });
 
     afterAll(async () => {
-        // Supprimez toutes les gares et utilisateurs après les tests
+        // Remove all train stations and users after tests
         await TrainStation.deleteMany({});
         await User.deleteMany({});
+        await mongoose.disconnect(); // Disconnect from MongoDB
     });
 
     test('should get all train stations', async () => {

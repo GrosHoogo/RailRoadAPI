@@ -1,14 +1,15 @@
 const request = require('supertest');
-const app = require('../app'); // Assurez-vous que votre application Express est exportée
+const app = require('../app'); // Make sure your Express app is exported
 const User = require('../models/User');
+const mongoose = require('mongoose'); // Import mongoose
 
 describe('User API Tests', () => {
     let adminToken;
     let userToken;
-    let userId; // Pour stocker l'ID de l'utilisateur créé pour les tests
+    let userId; // To store the ID of the user created for tests
 
     beforeAll(async () => {
-        // Créez un utilisateur administrateur pour le test
+        // Create an admin user for the test
         const adminUser = new User({
             email: 'admin@example.com',
             pseudo: 'admin',
@@ -18,21 +19,22 @@ describe('User API Tests', () => {
         await adminUser.save();
         adminToken = adminUser.generateAuthToken();
 
-        // Créez un utilisateur normal pour le test
+        // Create a normal user for the test
         const normalUser = new User({
             email: 'testuser@example.com',
             pseudo: 'testuser',
             password: 'testPassword',
-            role: 'user' // Rôle utilisateur normal
+            role: 'user' // Normal user role
         });
         await normalUser.save();
         userToken = normalUser.generateAuthToken();
-        userId = normalUser._id; // Enregistrez l'ID pour les tests suivants
+        userId = normalUser._id; // Save the ID for subsequent tests
     });
 
     afterAll(async () => {
-        // Supprimez tous les utilisateurs après les tests
+        // Remove all users after tests
         await User.deleteMany({});
+        await mongoose.disconnect(); // Disconnect from MongoDB
     });
 
     test('should register a new user', async () => {
@@ -68,7 +70,7 @@ describe('User API Tests', () => {
             .set('Authorization', `Bearer ${userToken}`);
 
         expect(response.status).toBe(200);
-        expect(response.body).toHaveProperty('pseudo', 'testuser'); // Vérifiez que seul le pseudo est renvoyé
+        expect(response.body).toHaveProperty('pseudo', 'testuser'); // Verify that only the pseudo is returned
     });
 
     test('should update the user profile', async () => {
