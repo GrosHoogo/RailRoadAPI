@@ -8,6 +8,9 @@ describe('Train Station API Tests', () => {
     let testStationId; // Pour stocker l'ID de la gare créée pour les tests
 
     beforeAll(async () => {
+        // Supprimer tous les utilisateurs existants avant de créer un nouvel admin
+        await User.deleteMany({});
+
         // Créer un utilisateur administrateur pour le test
         const adminUser = new User({
             email: 'admin@example.com',
@@ -17,6 +20,9 @@ describe('Train Station API Tests', () => {
         });
         await adminUser.save();
         adminToken = adminUser.generateAuthToken();
+
+        // Supprimer toutes les gares existantes avant de créer une nouvelle gare
+        await TrainStation.deleteMany({});
 
         // Créer une gare pour les tests
         const testStation = new TrainStation({

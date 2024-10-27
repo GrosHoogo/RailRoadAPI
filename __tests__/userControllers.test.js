@@ -62,8 +62,6 @@ describe('User API Tests', () => {
         expect(response.body.user).toHaveProperty('email', 'testuser@example.com');
     });
 
-    
-
     test('should get the profile of a normal user (user)', async () => {
         const response = await request(app)
             .get(`/api/users/${userId}`)
