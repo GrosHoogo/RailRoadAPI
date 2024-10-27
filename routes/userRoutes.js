@@ -10,8 +10,9 @@ router.post('/register', register);
 // Connexion
 router.post('/login', login);
 
-// Obtenir le profil utilisateur
-router.get('/me', auth, getProfile);
+// Obtenir le profil utilisateur par ID
+router.get('/:id', auth, getProfile);
+
 
 // Mettre à jour le profil utilisateur
 router.put('/me', auth, updateProfile);

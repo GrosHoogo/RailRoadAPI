@@ -27,10 +27,32 @@ exports.login = async (req, res) => {
   }
 };
 
-// Obtenir le profil de l'utilisateur connecté
+// Obtenir le profil d'un utilisateur par ID
 exports.getProfile = async (req, res) => {
-  res.send(req.user);
+  const userId = req.params.id;
+  const requestingUser = req.user; // L'utilisateur connecté
+
+  try {
+    // Trouver l'utilisateur par ID
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res.status(404).send({ error: 'User not found' });
+    }
+
+    // Si l'utilisateur connecté demande son propre profil ou est admin/employee
+    if (requestingUser._id.toString() === userId || requestingUser.role === 'admin' || requestingUser.role === 'employee') {
+      return res.send(user); // Renvoie toutes les informations
+    }
+
+    // Si l'utilisateur connecté est un utilisateur normal, renvoyer seulement le pseudo
+    return res.send({ pseudo: user.pseudo });
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    res.status(500).send({ error: 'Failed to fetch user profile' });
+  }
 };
+
 
 // Mettre à jour le profil utilisateur
 exports.updateProfile = async (req, res) => {

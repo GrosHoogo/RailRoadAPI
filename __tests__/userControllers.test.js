@@ -4,6 +4,7 @@ const User = require('../models/User');
 
 describe('User API Tests', () => {
     let adminToken;
+    let userToken;
     let userId; // Pour stocker l'ID de l'utilisateur créé pour les tests
 
     beforeAll(async () => {
@@ -16,6 +17,17 @@ describe('User API Tests', () => {
         });
         await adminUser.save();
         adminToken = adminUser.generateAuthToken();
+
+        // Créez un utilisateur normal pour le test
+        const normalUser = new User({
+            email: 'testuser@example.com',
+            pseudo: 'testuser',
+            password: 'testPassword',
+            role: 'user' // Rôle utilisateur normal
+        });
+        await normalUser.save();
+        userToken = normalUser.generateAuthToken();
+        userId = normalUser._id; // Enregistrez l'ID pour les tests suivants
     });
 
     afterAll(async () => {
@@ -27,15 +39,14 @@ describe('User API Tests', () => {
         const response = await request(app)
             .post('/api/users/register')
             .send({
-                email: 'testuser@example.com',
-                pseudo: 'testuser',
-                password: 'testPassword'
+                email: 'newuser@example.com',
+                pseudo: 'newuser',
+                password: 'newPassword'
             });
 
         expect(response.status).toBe(201);
         expect(response.body).toHaveProperty('user');
-        expect(response.body.user).toHaveProperty('email', 'testuser@example.com');
-        userId = response.body.user._id; // Enregistrez l'ID pour les tests suivants
+        expect(response.body.user).toHaveProperty('email', 'newuser@example.com');
     });
 
     test('should login a user', async () => {
@@ -51,19 +62,21 @@ describe('User API Tests', () => {
         expect(response.body.user).toHaveProperty('email', 'testuser@example.com');
     });
 
-    test('should get the profile of the logged in user', async () => {
+    
+
+    test('should get the profile of a normal user (user)', async () => {
         const response = await request(app)
-            .get('/api/users/me')
-            .set('Authorization', `Bearer ${adminToken}`);
+            .get(`/api/users/${userId}`)
+            .set('Authorization', `Bearer ${userToken}`);
 
         expect(response.status).toBe(200);
-        expect(response.body).toHaveProperty('email', 'admin@example.com'); // Vérifiez les détails de l'admin
+        expect(response.body).toHaveProperty('pseudo', 'testuser'); // Vérifiez que seul le pseudo est renvoyé
     });
 
     test('should update the user profile', async () => {
         const response = await request(app)
             .put('/api/users/me')
-            .set('Authorization', `Bearer ${adminToken}`)
+            .set('Authorization', `Bearer ${userToken}`)
             .send({
                 pseudo: 'updatedUser'
             });
