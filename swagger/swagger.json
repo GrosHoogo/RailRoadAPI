@@ -2,29 +2,11 @@
   "swagger": "2.0",
   "info": {
     "version": "1.0.0",
-    "title": "RailRoad API",
-    "description": "API for managing users, train stations, trains, and tickets"
+    "title": "Train Ticketing API",
+    "description": "API for managing train tickets, users, trains, and train stations"
   },
   "host": "localhost:3000",
   "basePath": "/api",
-  "tags": [
-    {
-      "name": "Users",
-      "description": "Operations related to users"
-    },
-    {
-      "name": "TrainStations",
-      "description": "Operations related to train stations"
-    },
-    {
-      "name": "Trains",
-      "description": "Operations related to trains"
-    },
-    {
-      "name": "Tickets",
-      "description": "Operations related to tickets"
-    }
-  ],
   "schemes": ["http"],
   "paths": {
     "/users/register": {
@@ -35,7 +17,7 @@
           {
             "name": "body",
             "in": "body",
-            "description": "User object",
+            "description": "User registration details",
             "schema": {
               "$ref": "#/definitions/User"
             }
@@ -43,10 +25,16 @@
         ],
         "responses": {
           "201": {
-            "description": "User created"
+            "description": "User created",
+            "schema": {
+              "$ref": "#/definitions/UserResponse"
+            }
           },
           "400": {
-            "description": "User already exists"
+            "description": "Invalid input"
+          },
+          "500": {
+            "description": "Server error"
           }
         }
       }
@@ -54,12 +42,12 @@
     "/users/login": {
       "post": {
         "tags": ["Users"],
-        "summary": "Login a user",
+        "summary": "Log in a user",
         "parameters": [
           {
             "name": "body",
             "in": "body",
-            "description": "Login credentials",
+            "description": "User login details",
             "schema": {
               "$ref": "#/definitions/Login"
             }
@@ -67,10 +55,16 @@
         ],
         "responses": {
           "200": {
-            "description": "User logged in"
+            "description": "User logged in",
+            "schema": {
+              "$ref": "#/definitions/UserResponse"
+            }
           },
-          "400": {
+          "401": {
             "description": "Invalid credentials"
+          },
+          "500": {
+            "description": "Server error"
           }
         }
       }
@@ -78,15 +72,14 @@
     "/users/me": {
       "get": {
         "tags": ["Users"],
-        "summary": "Get the profile of the logged-in user",
-        "security": [
-          {
-            "Bearer": []
-          }
-        ],
+        "summary": "Get current user profile",
+        "security": [{ "Bearer": [] }],
         "responses": {
           "200": {
-            "description": "User profile retrieved"
+            "description": "User profile retrieved",
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
           },
           "401": {
             "description": "Unauthorized"
@@ -95,41 +88,86 @@
       },
       "put": {
         "tags": ["Users"],
-        "summary": "Update the profile of the logged-in user",
-        "security": [
-          {
-            "Bearer": []
-          }
-        ],
+        "summary": "Update current user profile",
+        "security": [{ "Bearer": [] }],
         "parameters": [
           {
             "name": "body",
             "in": "body",
-            "description": "Updated user object",
+            "description": "Updated user profile details",
             "schema": {
-              "$ref": "#/definitions/User"
+              "$ref": "#/definitions/UserUpdate"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "User profile updated"
+            "description": "User profile updated",
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
           },
           "401": {
             "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Users"],
+        "summary": "Delete current user profile",
+        "security": [{ "Bearer": [] }],
+        "responses": {
+          "200": {
+            "description": "User deleted"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Server error"
           }
         }
       }
     },
     "/users/{id}": {
-      "delete": {
+      "get": {
         "tags": ["Users"],
-        "summary": "Delete a user by ID (admin only)",
-        "security": [
+        "summary": "Get user by ID (admin only)",
+        "security": [{ "Bearer": [] }],
+        "parameters": [
           {
-            "Bearer": []
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID of the user to retrieve",
+            "type": "string"
           }
         ],
+        "responses": {
+          "200": {
+            "description": "User retrieved",
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
+          },
+          "404": {
+            "description": "User not found"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Users"],
+        "summary": "Delete user by ID (admin only)",
+        "security": [{ "Bearer": [] }],
         "parameters": [
           {
             "name": "id",
@@ -141,125 +179,13 @@
         ],
         "responses": {
           "200": {
-            "description": "User profile deleted"
+            "description": "User deleted"
           },
           "404": {
             "description": "User not found"
           },
           "401": {
             "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden: Admin access required"
-          },
-          "500": {
-            "description": "Server error"
-          }
-        }
-      }
-    },
-    "/trainstations": {
-      "get": {
-        "tags": ["TrainStations"],
-        "summary": "Get all train stations",
-        "responses": {
-          "200": {
-            "description": "List of train stations"
-          },
-          "500": {
-            "description": "Server error"
-          }
-        }
-      },
-      "post": {
-        "tags": ["TrainStations"],
-        "summary": "Create a new train station (admin only)",
-        "security": [
-          {
-            "Bearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "description": "Train station object",
-            "schema": {
-              "$ref": "#/definitions/TrainStation"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Train station created"
-          },
-          "500": {
-            "description": "Server error"
-          }
-        }
-      }
-    },
-    "/trainstations/{id}": {
-      "put": {
-        "tags": ["TrainStations"],
-        "summary": "Update a train station (admin only)",
-        "security": [
-          {
-            "Bearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "ID of the train station to update",
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "description": "Updated train station object",
-            "schema": {
-              "$ref": "#/definitions/TrainStation"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Train station updated"
-          },
-          "404": {
-            "description": "Train station not found"
-          },
-          "500": {
-            "description": "Server error"
-          }
-        }
-      },
-      "delete": {
-        "tags": ["TrainStations"],
-        "summary": "Delete a train station (admin only)",
-        "security": [
-          {
-            "Bearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "ID of the train station to delete",
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Train station deleted"
-          },
-          "404": {
-            "description": "Train station not found"
           },
           "500": {
             "description": "Server error"
@@ -273,7 +199,13 @@
         "summary": "Get all trains",
         "responses": {
           "200": {
-            "description": "List of trains"
+            "description": "List of trains",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Train"
+              }
+            }
           },
           "500": {
             "description": "Server error"
@@ -283,16 +215,12 @@
       "post": {
         "tags": ["Trains"],
         "summary": "Create a new train (admin only)",
-        "security": [
-          {
-            "Bearer": []
-          }
-        ],
+        "security": [{ "Bearer": [] }],
         "parameters": [
           {
             "name": "body",
             "in": "body",
-            "description": "Train object",
+            "description": "Train details",
             "schema": {
               "$ref": "#/definitions/Train"
             }
@@ -300,7 +228,10 @@
         ],
         "responses": {
           "201": {
-            "description": "Train created"
+            "description": "Train created",
+            "schema": {
+              "$ref": "#/definitions/Train"
+            }
           },
           "500": {
             "description": "Server error"
@@ -312,11 +243,7 @@
       "put": {
         "tags": ["Trains"],
         "summary": "Update a train (admin only)",
-        "security": [
-          {
-            "Bearer": []
-          }
-        ],
+        "security": [{ "Bearer": [] }],
         "parameters": [
           {
             "name": "id",
@@ -328,7 +255,7 @@
           {
             "name": "body",
             "in": "body",
-            "description": "Updated train object",
+            "description": "Updated train details",
             "schema": {
               "$ref": "#/definitions/Train"
             }
@@ -336,7 +263,10 @@
         ],
         "responses": {
           "200": {
-            "description": "Train updated"
+            "description": "Train updated",
+            "schema": {
+              "$ref": "#/definitions/Train"
+            }
           },
           "404": {
             "description": "Train not found"
@@ -349,11 +279,7 @@
       "delete": {
         "tags": ["Trains"],
         "summary": "Delete a train (admin only)",
-        "security": [
-          {
-            "Bearer": []
-          }
-        ],
+        "security": [{ "Bearer": [] }],
         "parameters": [
           {
             "name": "id",
@@ -376,15 +302,120 @@
         }
       }
     },
+    "/trainstations": {
+      "get": {
+        "tags": ["Train Stations"],
+        "summary": "Get all train stations",
+        "responses": {
+          "200": {
+            "description": "List of train stations",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/TrainStation"
+              }
+            }
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Train Stations"],
+        "summary": "Create a new train station (admin only)",
+        "security": [{ "Bearer": [] }],
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "description": "Train station details",
+            "schema": {
+              "$ref": "#/definitions/TrainStation"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Train station created",
+            "schema": {
+              "$ref": "#/definitions/TrainStation"
+            }
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/trainstations/{id}": {
+      "put": {
+        "tags": ["Train Stations"],
+        "summary": "Update a train station (admin only)",
+        "security": [{ "Bearer": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID of the train station to update",
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "description": "Updated train station details",
+            "schema": {
+              "$ref": "#/definitions/TrainStation"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Train station updated",
+            "schema": {
+              "$ref": "#/definitions/TrainStation"
+            }
+          },
+          "404": {
+            "description": "Train station not found"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Train Stations"],
+        "summary": "Delete a train station (admin only)",
+        "security": [{ "Bearer": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID of the train station to delete",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Train station deleted"
+          },
+          "404": {
+            "description": "Train station not found"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
     "/tickets/book": {
       "post": {
         "tags": ["Tickets"],
-        "summary": "Book a ticket",
-        "security": [
-          {
-            "Bearer": []
-          }
-        ],
+        "summary": "Book a new ticket",
+        "security": [{ "Bearer": [] }],
         "parameters": [
           {
             "name": "body",
@@ -397,10 +428,10 @@
         ],
         "responses": {
           "201": {
-            "description": "Ticket booked successfully"
-          },
-          "400": {
-            "description": "Invalid booking details"
+            "description": "Ticket booked",
+            "schema": {
+              "$ref": "#/definitions/Ticket"
+            }
           },
           "500": {
             "description": "Server error"
@@ -411,12 +442,8 @@
     "/tickets/{ticketId}/validate": {
       "put": {
         "tags": ["Tickets"],
-        "summary": "Validate a ticket (only for employee or admin)",
-        "security": [
-          {
-            "Bearer": []
-          }
-        ],
+        "summary": "Validate a ticket (employee/admin only)",
+        "security": [{ "Bearer": [] }],
         "parameters": [
           {
             "name": "ticketId",
@@ -433,6 +460,9 @@
           "404": {
             "description": "Ticket not found"
           },
+          "401": {
+            "description": "Unauthorized"
+          },
           "500": {
             "description": "Server error"
           }
@@ -445,7 +475,8 @@
       "type": "object",
       "properties": {
         "email": {
-          "type": "string"
+          "type": "string",
+          "format": "email"
         },
         "pseudo": {
           "type": "string"
@@ -460,11 +491,27 @@
       },
       "required": ["email", "pseudo", "password"]
     },
+    "UserUpdate": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "pseudo": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        }
+      }
+    },
     "Login": {
       "type": "object",
       "properties": {
         "email": {
-          "type": "string"
+          "type": "string",
+          "format": "email"
         },
         "password": {
           "type": "string"
@@ -472,20 +519,16 @@
       },
       "required": ["email", "password"]
     },
-    "TrainStation": {
+    "UserResponse": {
       "type": "object",
       "properties": {
-        "name": {
-          "type": "string"
+        "user": {
+          "$ref": "#/definitions/User"
         },
-        "open_hour": {
-          "type": "string"
-        },
-        "close_hour": {
+        "token": {
           "type": "string"
         }
-      },
-      "required": ["name", "open_hour", "close_hour"]
+      }
     },
     "Train": {
       "type": "object",
@@ -506,6 +549,21 @@
       },
       "required": ["name", "start_station", "end_station", "time_of_departure"]
     },
+    "TrainStation": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "open_hour": {
+          "type": "string"
+        },
+        "close_hour": {
+          "type": "string"
+        }
+      },
+      "required": ["name", "open_hour", "close_hour"]
+    },
     "Ticket": {
       "type": "object",
       "properties": {
@@ -514,7 +572,7 @@
           "format": "objectId"
         }
       },
-      "required": ["trainId"]
+      "required": ["user", "train"]
     }
   },
   "securityDefinitions": {
