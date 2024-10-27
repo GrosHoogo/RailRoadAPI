@@ -34,8 +34,9 @@ npm install express mongoose bcryptjs jsonwebtoken supertest dotenv swagger-ui-e
 
     npm install
 
-3. Créez un fichier .env à la racine du projet et ajoutez votre clé secrète JWT :
+3. Créez un fichier .env à la racine du projet et ajoutez votre clé secrète JWT et votre Bdd:
 
+    MONGO_URI=your_bdd_url
     JWT_SECRET=your_secret_key
 
 4. Assurez-vous d'avoir MongoDB en cours d'exécution. Vous pouvez utiliser MongoDB Atlas ou installer MongoDB localement.
