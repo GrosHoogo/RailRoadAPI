@@ -51,14 +51,30 @@ exports.updateProfile = async (req, res) => {
   }
 };
 
-// Supprimer le profil utilisateur
+// Supprimer le profil utilisateur par ID
 exports.deleteProfile = async (req, res) => {
+  const userId = req.params.id; 
+  console.log(`Attempting to delete user with ID: ${userId}`);
+  
   try {
-    await req.user.remove();
-    res.send(req.user);
+      const userToDelete = await User.findById(userId);
+      if (!userToDelete) {
+          return res.status(404).send({ error: 'User not found' });
+      }
+
+      console.log(`User found:`, userToDelete);
+
+      if (req.user.role !== 'admin') {
+          return res.status(403).send({ error: 'Access denied. Admins only.' });
+      }
+
+      await User.deleteOne({ _id: userId }); // Utilisez deleteOne ici
+      console.log(`User deleted with ID:`, userId);
+      res.send({ message: 'User deleted successfully' });
   } catch (error) {
-    console.error('Error deleting user:', error);
-    res.status(500).send({ error: 'Failed to delete user' });
+      console.error('Error deleting user:', error);
+      res.status(500).send({ error: 'Failed to delete user' });
   }
 };
+
 

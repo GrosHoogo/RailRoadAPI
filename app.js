@@ -1,3 +1,4 @@
+// Load necessary packages
 const express = require('express');
 const dotenv = require('dotenv');
 const swaggerUi = require('swagger-ui-express');
@@ -31,8 +32,18 @@ app.use('/api/trains', trainRoutes);
 app.use('/api/trainstations', trainstationRoutes);
 app.use('/api/tickets', ticketRoutes);
 
-// Start the server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// Function to start the server
+const startServer = () => {
+    const PORT = process.env.PORT || 3000; // Use PORT from .env or default to 3000
+    app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`); // Log the running port
+    });
+};
+
+// Start the server only if the file is run directly
+if (require.main === module) {
+    startServer();
+}
+
+// Export the app for testing or further usage if needed
+module.exports = app; // Change this line to export only the app
